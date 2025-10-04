@@ -1590,12 +1590,22 @@
                 }
             } catch (error) {
                 console.error('探索雷达失败:', error);
-                resultsContainer.innerHTML = `
-                    <div class="error">
-                        <i class="fas fa-wifi"></i>
-                        <div>网络连接失败，请检查网络后重试</div>
-                    </div>
-                `;
+                // 修复：添加更详细的错误处理，区分网络错误和文件访问限制
+                if (window.location.protocol === 'file:') {
+                    resultsContainer.innerHTML = `
+                        <div class="error">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <div>由于浏览器安全限制，无法通过文件方式访问API。<br>请使用本地服务器方式打开页面（如 http://localhost:8000 ）</div>
+                        </div>
+                    `;
+                } else {
+                    resultsContainer.innerHTML = `
+                        <div class="error">
+                            <i class="fas fa-wifi"></i>
+                            <div>网络连接失败，请检查网络后重试</div>
+                        </div>
+                    `;
+                }
             } finally {
                 exploreBtn.disabled = false;
                 exploreBtn.innerHTML = '<i class="fas fa-satellite-dish"></i><span>探索雷达 - 发现热门音乐</span>';
@@ -1656,12 +1666,22 @@
                 }
             } catch (error) {
                 console.error('搜索失败:', error);
-                resultsContainer.innerHTML = `
-                    <div class="error">
-                        <i class="fas fa-wifi"></i>
-                        <div>网络连接失败，请检查网络后重试</div>
-                    </div>
-                `;
+                // 修复：添加更详细的错误处理，区分网络错误和文件访问限制
+                if (window.location.protocol === 'file:') {
+                    resultsContainer.innerHTML = `
+                        <div class="error">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <div>由于浏览器安全限制，无法通过文件方式访问API。<br>请使用本地服务器方式打开页面（如 http://localhost:8000 ）</div>
+                        </div>
+                    `;
+                } else {
+                    resultsContainer.innerHTML = `
+                        <div class="error">
+                            <i class="fas fa-wifi"></i>
+                            <div>网络连接失败，请检查网络后重试</div>
+                        </div>
+                    `;
+                }
             }
         }
 
@@ -1680,6 +1700,11 @@
                 }
             } catch (error) {
                 console.error('获取专辑图失败:', error);
+                // 修复：添加更详细的错误处理，区分网络错误和文件访问限制
+                if (window.location.protocol === 'file:') {
+                    // 文件访问模式下返回默认图片
+                    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTUiIGhlaWdodD0iNTUiIHZpZXdCb3g9IjAgMCA1NSA1NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjU1IiBoZWlnaHQ9IjU1IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHJ4PSI4Ii8+CjxwYXRoIGQ9Ik0yNy41IDE4TDM1IDI3LjVIMzBWMzdIMjVWMjcuNUgyMEwyNy41IDE4WiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjMpIi8+Cjwvc3ZnPgo=';
+                }
             }
             
             return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTUiIGhlaWdodD0iNTUiIHZpZXdCb3g9IjAgMCA1NSA1NSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjU1IiBoZWlnaHQ9IjU1IiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHJ4PSI4Ii8+CjxwYXRoIGQ9Ik0yNy41IDE4TDM1IDI3LjVIMzBWMzdIMjVWMjcuNUgyMEwyNy41IDE4WiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjMpIi8+Cjwvc3ZnPgo=';
@@ -1774,7 +1799,12 @@
                 }
             } catch (error) {
                 console.error('播放失败:', error);
-                showNotification('播放失败，请检查网络连接', 'error');
+                // 修复：添加更详细的错误处理，区分网络错误和文件访问限制
+                if (window.location.protocol === 'file:') {
+                    showNotification('由于浏览器安全限制，无法通过文件方式访问API。请使用本地服务器方式打开页面（如 http://localhost:8000 ）', 'error');
+                } else {
+                    showNotification('播放失败，请检查网络连接', 'error');
+                }
             }
         }
 
@@ -1834,7 +1864,12 @@
                 }
             } catch (error) {
                 console.error('下载失败:', error);
-                showNotification('下载失败，请稍后重试', 'error');
+                // 修复：添加更详细的错误处理，区分网络错误和文件访问限制
+                if (window.location.protocol === 'file:') {
+                    showNotification('由于浏览器安全限制，无法通过文件方式访问API。请使用本地服务器方式打开页面（如 http://localhost:8000 ）', 'error');
+                } else {
+                    showNotification('下载失败，请稍后重试', 'error');
+                }
             }
         }
 
@@ -1877,7 +1912,12 @@
                 }
             } catch (error) {
                 console.error('下载歌词失败:', error);
-                showNotification('下载歌词失败，请稍后重试', 'error');
+                // 修复：添加更详细的错误处理，区分网络错误和文件访问限制
+                if (window.location.protocol === 'file:') {
+                    showNotification('由于浏览器安全限制，无法通过文件方式访问API。请使用本地服务器方式打开页面（如 http://localhost:8000 ）', 'error');
+                } else {
+                    showNotification('下载歌词失败，请稍后重试', 'error');
+                }
             }
         }
 
@@ -1939,7 +1979,12 @@
                 }
             } catch (error) {
                 console.error('获取歌词失败:', error);
-                lyricsContainer.innerHTML = '<div class="lyric-line">歌词加载失败</div>';
+                // 修复：添加更详细的错误处理，区分网络错误和文件访问限制
+                if (window.location.protocol === 'file:') {
+                    lyricsContainer.innerHTML = '<div class="lyric-line">由于浏览器安全限制，无法加载歌词</div>';
+                } else {
+                    lyricsContainer.innerHTML = '<div class="lyric-line">歌词加载失败</div>';
+                }
                 currentLyrics = [];
             }
         }
@@ -2465,12 +2510,22 @@
                 }
             } catch (error) {
                 console.error('解析歌单失败:', error);
-                resultsContainer.innerHTML = `
-                    <div class="error">
-                        <i class="fas fa-wifi"></i>
-                        <div>网络连接失败，请检查网络后重试</div>
-                    </div>
-                `;
+                // 修复：添加更详细的错误处理，区分网络错误和文件访问限制
+                if (window.location.protocol === 'file:') {
+                    resultsContainer.innerHTML = `
+                        <div class="error">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <div>由于浏览器安全限制，无法通过文件方式访问API。<br>请使用本地服务器方式打开页面（如 http://localhost:8000 ）</div>
+                        </div>
+                    `;
+                } else {
+                    resultsContainer.innerHTML = `
+                        <div class="error">
+                            <i class="fas fa-wifi"></i>
+                            <div>网络连接失败，请检查网络后重试</div>
+                        </div>
+                    `;
+                }
             }
         }
         
@@ -2641,12 +2696,22 @@
                 }
             } catch (error) {
                 console.error('刷新歌单失败:', error);
-                resultsContainer.innerHTML = `
-                    <div class="error">
-                        <i class="fas fa-wifi"></i>
-                        <div>网络连接失败，请检查网络后重试</div>
-                    </div>
-                `;
+                // 修复：添加更详细的错误处理，区分网络错误和文件访问限制
+                if (window.location.protocol === 'file:') {
+                    resultsContainer.innerHTML = `
+                        <div class="error">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <div>由于浏览器安全限制，无法通过文件方式访问API。<br>请使用本地服务器方式打开页面（如 http://localhost:8000 ）</div>
+                        </div>
+                    `;
+                } else {
+                    resultsContainer.innerHTML = `
+                        <div class="error">
+                            <i class="fas fa-wifi"></i>
+                            <div>网络连接失败，请检查网络后重试</div>
+                        </div>
+                    `;
+                }
                 showNotification('网络连接失败', 'error');
             }
         }
