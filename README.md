@@ -22,7 +22,7 @@
 5. 选择你的 Git 仓库
 6. 配置以下设置：
    - **Project name**: music-player
-   - **Production branch**: main (或你的主分支名称)
+   - **Production branch**: cf-pages (或你的主分支名称)
    - **Build command**: (留空，因为这是静态网站)
    - **Build output directory**: / (根目录)
 7. 点击 "Save and Deploy"
