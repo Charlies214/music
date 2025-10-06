@@ -1,64 +1,91 @@
-# 云音乐播放器使用说明
+# 云音乐播放器 - Cloudflare Pages 部署版本
 
-## 问题说明
+这是一个基于 HTML、CSS 和 JavaScript 的在线音乐播放器，可以轻松部署到 Cloudflare Pages 上。
 
-在使用本音乐播放器时，您可能会遇到以下问题：
-- 通过文件路径直接打开（file://协议）时，歌单内容一直显示加载中
-- 功能无法正常使用
+## 功能特性
 
-这是由于现代浏览器的安全策略限制导致的。当使用`file://`协议直接打开HTML文件时，浏览器会阻止跨域请求，从而导致API无法正常访问。
+- 搜索多个音乐平台的歌曲（网易云音乐、QQ音乐、酷我音乐等）
+- 播放音乐和显示歌词
+- 创建和管理播放列表
+- 响应式设计，支持移动端
+- 音频可视化效果
+- 支持多种音质选择
 
-## 解决方案
+## 部署到 Cloudflare Pages
 
-为了正常使用所有功能，请使用本地服务器方式打开页面，而不是直接双击HTML文件。
+### 方法一：通过 Git 部署（推荐）
 
-### 方法一：使用Python启动本地服务器（推荐）
+1. 将此项目推送到 GitHub、GitLab 或 Bitbucket 仓库
+2. 登录到 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+3. 选择 "Pages" 服务
+4. 点击 "Create a project"
+5. 选择你的 Git 仓库
+6. 配置以下设置：
+   - **Project name**: music-player
+   - **Production branch**: main (或你的主分支名称)
+   - **Build command**: (留空，因为这是静态网站)
+   - **Build output directory**: / (根目录)
+7. 点击 "Save and Deploy"
 
-1. 打开命令提示符（CMD）或PowerShell
-2. 进入项目目录：
-   ```bash
-   cd D:\Documents\Music
-   ```
-3. 启动本地服务器：
-   ```bash
-   python -m http.server 8000
-   ```
-4. 打开浏览器，访问：http://localhost:8000
+### 方法二：直接上传部署
 
-### 方法二：使用Node.js启动本地服务器
+1. 访问 [Cloudflare Dashboard](https://dash.cloudflare.com/)
+2. 选择 "Pages" 服务
+3. 点击 "Create a project" 然后选择 "Upload assets"
+4. 将 [index.html](index.html) 文件拖放到上传区域
+5. 点击 "Deploy site"
 
-如果您安装了Node.js，可以使用以下命令：
+## 本地开发
 
-1. 安装http-server：
-   ```bash
-   npm install -g http-server
-   ```
-2. 进入项目目录并启动服务器：
-   ```bash
-   cd D:\Documents\Music
-   http-server
-   ```
-3. 打开浏览器，访问显示的地址（通常是http://localhost:8080）
+要本地运行此项目，可以使用任何静态文件服务器：
 
-## 功能特点
+### 使用 Python
 
-- 支持网易云音乐、QQ音乐、酷我音乐等多个平台
-- 歌单解析与保存功能
-- 音乐播放、歌词同步显示
-- 音质选择与下载功能
-- 响应式设计，支持移动端使用
+```bash
+# Python 3
+python -m http.server 8000
 
-## 使用说明
+# Python 2
+python -m SimpleHTTPServer 8000
+```
 
-1. 通过本地服务器访问页面（如 http://localhost:8000/Music-Final.html）
-2. 在搜索框中输入歌曲名、歌手或专辑进行搜索
-3. 点击"探索雷达"发现热门音乐
-4. 在"网易云歌单"标签页中输入歌单链接或ID解析歌单
-5. 点击歌曲进行播放
-6. 可以调整音质、下载音乐和歌词
+### 使用 Node.js
+
+```bash
+# 安装 serve（如果尚未安装）
+npm install -g serve
+
+# 运行服务器
+serve -s .
+```
+
+然后在浏览器中访问 http://localhost:8000
+
+## 技术栈
+
+- HTML5
+- CSS3 (包含响应式设计和动画效果)
+- JavaScript (ES6+)
+- FontAwesome 图标库
+- Cloudflare Pages 静态托管
+
+## API 说明
+
+本播放器使用第三方音乐 API 服务，所有音乐资源均来自合法渠道。
+
+## 浏览器兼容性
+
+- Chrome (推荐)
+- Firefox
+- Safari
+- Edge
 
 ## 注意事项
 
-- 请确保网络连接正常
-- 某些功能需要在本地服务器环境下才能正常使用
-- 建议使用Chrome、Firefox或Edge等现代浏览器以获得最佳体验
+1. 由于浏览器安全策略，文件协议（file://）无法正常使用，必须通过 HTTP 服务器访问
+2. 某些功能可能需要 HTTPS 环境才能正常工作
+3. 移动端使用时，可能需要用户手动点击播放按钮才能开始播放音频
+
+## 许可证
+
+本项目仅供个人学习和研究使用，请遵守相关法律法规，不要用于商业用途。
