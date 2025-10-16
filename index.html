@@ -1897,6 +1897,9 @@
                             updatePlayButton();
                             currentCover.classList.add('playing');
 
+                            // 更新 Media Session
+                            updateMediaSession(song);
+
                             showNotification(`开始播放 (${getQualityText(urlData.br || quality)})`, 'success');
                     }).catch(error => {
                         console.error('播放失败:', error);
@@ -2185,6 +2188,51 @@
             }
         }
 
+        // 更新 Media Session 元数据和控制器
+        async function updateMediaSession(song) {
+            if ('mediaSession' in navigator) {
+                try {
+                    // 获取封面图
+                    const artwork = await getAlbumCoverUrl(song, 512);
+
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: song.name,
+                        artist: Array.isArray(song.artist) ? song.artist.join(', ') : song.artist,
+                        album: song.album,
+                        artwork: [
+                            { src: artwork, sizes: '96x96',   type: 'image/png' },
+                            { src: artwork, sizes: '128x128', type: 'image/png' },
+                            { src: artwork, sizes: '192x192', type: 'image/png' },
+                            { src: artwork, sizes: '256x256', type: 'image/png' },
+                            { src: artwork, sizes: '384x384', type: 'image/png' },
+                            { src: artwork, sizes: '512x512', type: 'image/png' }
+                        ]
+                    });
+
+                    // 设置媒体控制器动作处理程序
+                    navigator.mediaSession.setActionHandler('play', () => {
+                        audioPlayer.play();
+                    });
+
+                    navigator.mediaSession.setActionHandler('pause', () => {
+                        audioPlayer.pause();
+                    });
+
+                    navigator.mediaSession.setActionHandler('previoustrack', () => {
+                        previousSong();
+                    });
+
+                    navigator.mediaSession.setActionHandler('nexttrack', () => {
+                        nextSong();
+                    });
+
+                    console.log('Media Session 已更新');
+                } catch (error) {
+                    console.error('更新 Media Session 失败:', error);
+                }
+            }
+        }
+
         function togglePlay() {
             if (audioPlayer.src) {
                 if (isPlaying) {
@@ -2303,6 +2351,19 @@
         audioPlayer.addEventListener('loadedmetadata', () => {
             if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
             totalTimeSpan.textContent = formatTime(audioPlayer.duration);
+
+            // 更新 Media Session 位置状态
+            if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+                try {
+                    navigator.mediaSession.setPositionState({
+                        duration: audioPlayer.duration,
+                        playbackRate: audioPlayer.playbackRate,
+                        position: audioPlayer.currentTime
+                    });
+                } catch (error) {
+                    console.error('设置 Media Session 位置状态失败:', error);
+                }
+            }
             } else {
                 totalTimeSpan.textContent = '--:--';
             }
@@ -2330,6 +2391,11 @@
             updatePlayButton();
             currentCover.classList.add('playing');
 
+            // 更新 Media Session 播放状态
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'playing';
+            }
+
             // 移动端在播放开始时自动切换到播放页面
             if (window.innerWidth <= 768) {
                 switchMobilePage(1);
@@ -2340,6 +2406,11 @@
             isPlaying = false;
             updatePlayButton();
             currentCover.classList.remove('playing');
+
+            // 更新 Media Session 播放状态
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'paused';
+            }
         });
 
         document.addEventListener('keydown', (e) => {
