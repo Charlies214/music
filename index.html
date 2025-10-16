@@ -2103,10 +2103,34 @@
             for (const containerId of containers) {
                 const activeListItems = document.querySelectorAll(`${containerId} .song-item`);
                 if (activeListItems[currentIndex]) {
-                    activeListItems[currentIndex].classList.add('active');
+                    const activeItem = activeListItems[currentIndex];
+                    activeItem.classList.add('active');
+                    
+                    // 自动将当前播放的歌曲滚动到歌单中间位置
+                    scrollToActiveItem(activeItem, containerId);
                     break;
                 }
             }
+        }
+
+        // 将当前播放的歌曲滚动到可视区域的中间
+        function scrollToActiveItem(activeItem, containerId) {
+            const container = document.querySelector(containerId);
+            if (!container || !activeItem) return;
+
+            // 获取容器和元素的位置信息
+            const containerRect = container.getBoundingClientRect();
+            const itemRect = activeItem.getBoundingClientRect();
+            
+            // 计算需要滚动的距离：将元素定位到容器的中间位置
+            // 目标位置 = 元素当前相对于容器顶部的距离 - (容器高度的一半 - 元素高度的一半)
+            const scrollOffset = (itemRect.top - containerRect.top) + container.scrollTop - (containerRect.height / 2 - itemRect.height / 2);
+            
+            // 使用平滑滚动
+            container.scrollTo({
+                top: scrollOffset,
+                behavior: 'smooth'
+            });
         }
 
         function updatePlayButton() {
