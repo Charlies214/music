@@ -545,8 +545,27 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             height: calc(100vh - 240px);
+            overflow: hidden;
+        }
+
+        .player-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+
+        .player-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .player-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
         }
 
         .current-song {
@@ -1371,68 +1390,70 @@
 
         <!-- 播放器区域 -->
         <div class="player-section">
-            <div class="current-song">
-                <div class="current-cover-container">
-                    <img class="current-cover" id="currentCover" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjIwIiBoZWlnaHQ9IjIyMCIgdmlld0JveD0iMCAwIDIyMCAyMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMjAiIGhlaWdodD0iMjIwIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHJ4PSIyMCIvPgo8cGF0aCBkPSJNMTEwIDcwTDE0MCAxMTBIMTIwVjE1MEg5MFYxMTBINzBMMTEwIDcwWiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjMpIi8+Cjwvc3ZnPgo=" alt="专辑封面">
+            <div class="player-content">
+                <div class="current-song">
+                    <div class="current-cover-container">
+                        <img class="current-cover" id="currentCover" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjIwIiBoZWlnaHQ9IjIyMCIgdmlld0JveD0iMCAwIDIyMCAyMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMjAiIGhlaWdodD0iMjIwIiBmaWxsPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHJ4PSIyMCIvPgo8cGF0aCBkPSJNMTEwIDcwTDE0MCAxMTBIMTIwVjE1MEg5MFYxMTBINzBMMTEwIDcwWiIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjMpIi8+Cjwvc3ZnPgo=" alt="专辑封面">
+                    </div>
+                    <div class="current-info">
+                        <h3 id="currentTitle">未选择歌曲</h3>
+                        <p id="currentArtist">请搜索并选择要播放的歌曲</p>
+                    </div>
                 </div>
-                <div class="current-info">
-                    <h3 id="currentTitle">未选择歌曲</h3>
-                    <p id="currentArtist">请搜索并选择要播放的歌曲</p>
+
+                <div class="player-controls">
+                    <button class="control-btn small" onclick="previousSong()">
+                        <i class="fas fa-step-backward"></i>
+                    </button>
+                    <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button class="control-btn small" onclick="nextSong()">
+                        <i class="fas fa-step-forward"></i>
+                    </button>
                 </div>
-            </div>
 
-            <div class="player-controls">
-                <button class="control-btn small" onclick="previousSong()">
-                    <i class="fas fa-step-backward"></i>
-                </button>
-                <button class="control-btn play-btn" id="playBtn" onclick="togglePlay()">
-                    <i class="fas fa-play"></i>
-                </button>
-                <button class="control-btn small" onclick="nextSong()">
-                    <i class="fas fa-step-forward"></i>
-                </button>
-            </div>
-
-            <div class="progress-container">
-                <div class="progress-bar" onclick="seekTo(event)">
-                    <div class="progress-fill" id="progressFill"></div>
+                <div class="progress-container">
+                    <div class="progress-bar" onclick="seekTo(event)">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="time-info">
+                        <span id="currentTime">0:00</span>
+                        <span id="totalTime">0:00</span>
+                    </div>
                 </div>
-                <div class="time-info">
-                    <span id="currentTime">0:00</span>
-                    <span id="totalTime">0:00</span>
+
+                <!-- 音质选择 -->
+                <div class="quality-container">
+                    <div class="quality-label">
+                        <i class="fas fa-music"></i>
+                        <span>音质</span>
+                    </div>
+                    <select class="quality-select" id="qualitySelect">
+                        <option value="128">标准 128K</option>
+                        <option value="192">较高 192K</option>
+                        <option value="320" selected>高品质 320K</option>
+                        <option value="740">无损 FLAC</option>
+                        <option value="999">Hi-Res</option>
+                    </select>
                 </div>
-            </div>
 
-            <!-- 音质选择 -->
-            <div class="quality-container">
-                <div class="quality-label">
-                    <i class="fas fa-music"></i>
-                    <span>音质</span>
+                <div class="volume-container">
+                    <i class="fas fa-volume-up volume-icon"></i>
+                    <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80" onchange="setVolume(this.value)">
                 </div>
-                <select class="quality-select" id="qualitySelect">
-                    <option value="128">标准 128K</option>
-                    <option value="192">较高 192K</option>
-                    <option value="320" selected>高品质 320K</option>
-                    <option value="740">无损 FLAC</option>
-                    <option value="999">Hi-Res</option>
-                </select>
-            </div>
 
-            <div class="volume-container">
-                <i class="fas fa-volume-up volume-icon"></i>
-                <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80" onchange="setVolume(this.value)">
-            </div>
-
-            <!-- 下载区域 -->
-            <div class="download-container">
-                <button class="download-btn" onclick="downloadCurrentSong()" id="downloadSongBtn" disabled>
-                    <i class="fas fa-download"></i>
-                    <span>下载音乐</span>
-                </button>
-                <button class="download-btn" onclick="downloadCurrentLyric()" id="downloadLyricBtn" disabled>
-                    <i class="fas fa-file-text"></i>
-                    <span>下载歌词</span>
-                </button>
+                <!-- 下载区域 -->
+                <div class="download-container">
+                    <button class="download-btn" onclick="downloadCurrentSong()" id="downloadSongBtn" disabled>
+                        <i class="fas fa-download"></i>
+                        <span>下载音乐</span>
+                    </button>
+                    <button class="download-btn" onclick="downloadCurrentLyric()" id="downloadLyricBtn" disabled>
+                        <i class="fas fa-file-text"></i>
+                        <span>下载歌词</span>
+                    </button>
+                </div>
             </div>
 
             <audio id="audioPlayer" preload="metadata"></audio>
