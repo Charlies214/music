@@ -976,6 +976,25 @@
             border-color: rgba(244, 67, 54, 0.5);
         }
 
+        .action-btn-large.download-all-btn {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+
+        .action-btn-large.download-all-btn:hover {
+            background: linear-gradient(135deg, #1976D2, #1565C0);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(33, 150, 243, 0.4);
+        }
+
+        .action-btn-large.download-all-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         /* 歌词区域 */
         .lyrics-section {
             background: rgba(255, 255, 255, 0.05);
@@ -1378,6 +1397,8 @@
         }
 
   </style>
+    <!-- 引入JSZip库用于创建压缩包 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
     <div class="bg-animation"></div>
@@ -1466,6 +1487,9 @@
                             <p id="parsedPlaylistStats"><i class="fas fa-music"></i> 0首歌曲</p>
                         </div>
                         <div class="parsed-playlist-actions">
+                            <button class="action-btn-large download-all-btn" onclick="downloadAllSongs()" title="下载整个歌单">
+                                <i class="fas fa-download"></i> 下载全部
+                            </button>
                             <button class="action-btn-large save-btn" onclick="saveCurrentPlaylist()" title="保存到我的歌单">
                                 <i class="fas fa-bookmark"></i> 保存歌单
                             </button>
@@ -2068,6 +2092,212 @@
                     showNotification('下载歌词失败，请稍后重试', 'error');
                 }
             }
+        }
+
+        // 下载整个歌单的函数
+        async function downloadAllSongs() {
+            if (!currentParsedPlaylistData) {
+                showNotification('没有可下载的歌单', 'warning');
+                return;
+            }
+
+            const songs = currentParsedPlaylistData.songs;
+            if (!songs || songs.length === 0) {
+                showNotification('歌单为空', 'warning');
+                return;
+            }
+
+            showNotification(`开始下载整个歌单，共 ${songs.length} 首歌曲...`, 'info');
+            
+            // 创建进度条元素
+            const progressContainer = document.createElement('div');
+            progressContainer.id = 'downloadProgressContainer';
+            progressContainer.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 30px;
+                border-radius: 15px;
+                z-index: 2000;
+                min-width: 400px;
+                text-align: center;
+                backdrop-filter: blur(10px);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            `;
+            
+            progressContainer.innerHTML = `
+                <h3 style="margin-top: 0; color: #ff6b6b;">正在下载歌单</h3>
+                <div id="downloadStatus">正在准备下载...</div>
+                <div style="margin-top: 20px; font-size: 14px; color: #aaa;">
+                    <span id="progressText">0/${songs.length}</span>
+                </div>
+                <div style="margin-top: 15px; height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden;">
+                    <div id="progressBar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #ff6b6b, #ff8a80); border-radius: 5px; transition: width 0.3s ease;"></div>
+                </div>
+                <button id="cancelDownload" style="margin-top: 20px; background: #f44336; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 14px;">取消下载</button>
+            `;
+            
+            document.body.appendChild(progressContainer);
+            
+            // 禁止页面其他操作
+            const overlay = document.createElement('div');
+            overlay.id = 'downloadOverlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1999;
+                backdrop-filter: blur(5px);
+            `;
+            document.body.appendChild(overlay);
+            
+            // 存储下载的歌曲数据
+            const downloadedSongs = [];
+            const failedSongs = [];
+            
+            // 禁用下载按钮防止重复点击
+            const downloadBtn = document.querySelector('.download-all-btn');
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 下载中...';
+            downloadBtn.disabled = true;
+            
+            // 添加取消下载功能
+            let isCancelled = false;
+            document.getElementById('cancelDownload').addEventListener('click', () => {
+                isCancelled = true;
+                progressContainer.remove();
+                overlay.remove();
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+                showNotification('下载已取消', 'info');
+            });
+
+            try {
+                // 创建JSZip实例
+                const zip = new JSZip();
+                
+                // 逐个下载歌曲
+                for (let i = 0; i < songs.length; i++) {
+                    if (isCancelled) return;
+                    
+                    const song = songs[i];
+                    const quality = document.getElementById('qualitySelect').value;
+                    
+                    // 更新状态文本
+                    document.getElementById('downloadStatus').textContent = `正在下载: ${song.name}`;
+                    
+                    try {
+                        const response = await fetch(`${API_BASE}?types=url&source=${song.source}&id=${song.id}&br=${quality}`);
+                        const data = await response.json();
+                        
+                        if (data && data.url) {
+                            // 下载歌曲文件
+                            const songResponse = await fetch(data.url);
+                            const songBlob = await songResponse.blob();
+                            
+                            // 添加到ZIP文件
+                            const filename = `${song.name} - ${Array.isArray(song.artist) ? song.artist.join(', ') : song.artist}.mp3`;
+                            zip.file(filename, songBlob);
+                            
+                            // 添加到下载列表用于统计
+                            downloadedSongs.push(song.name);
+                        } else {
+                            failedSongs.push(song.name);
+                        }
+                    } catch (error) {
+                        console.error(`下载歌曲 ${song.name} 失败:`, error);
+                        failedSongs.push(song.name);
+                    }
+                    
+                    // 更新进度条
+                    const progressPercent = Math.round(((i + 1) / songs.length) * 100);
+                    document.getElementById('progressBar').style.width = `${progressPercent}%`;
+                    document.getElementById('progressText').textContent = `${i + 1}/${songs.length}`;
+                }
+
+                // 如果有失败的歌曲，显示提示
+                if (failedSongs.length > 0) {
+                    showNotification(`有 ${failedSongs.length} 首歌曲下载失败`, 'warning');
+                }
+
+                // 创建一个包含所有歌曲的文本文件作为清单
+                let playlistInfo = `歌单名称: ${currentParsedPlaylistData.name}\n`;
+                playlistInfo += `歌曲数量: ${songs.length} 首\n`;
+                playlistInfo += `成功下载: ${downloadedSongs.length} 首\n`;
+                playlistInfo += `下载失败: ${failedSongs.length} 首\n`;
+                playlistInfo += `下载时间: ${new Date().toLocaleString()}\n\n`;
+                playlistInfo += "成功下载的歌曲:\n";
+                
+                downloadedSongs.forEach((songName, index) => {
+                    playlistInfo += `${index + 1}. ${songName}\n`;
+                });
+                
+                if (failedSongs.length > 0) {
+                    playlistInfo += "\n下载失败的歌曲:\n";
+                    failedSongs.forEach((songName, index) => {
+                        playlistInfo += `${index + 1}. ${songName}\n`;
+                    });
+                }
+                
+                // 添加清单文件到ZIP
+                zip.file(`${currentParsedPlaylistData.name}_歌单清单.txt`, playlistInfo);
+
+                // 更新状态文本
+                document.getElementById('downloadStatus').textContent = '正在创建压缩包...';
+                
+                // 生成ZIP文件
+                const content = await zip.generateAsync({type: "blob"});
+                
+                // 移除进度条和遮罩
+                progressContainer.remove();
+                overlay.remove();
+                
+                // 下载ZIP文件
+                const url = URL.createObjectURL(content);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `${currentParsedPlaylistData.name}_歌单.zip`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                showNotification(`歌单下载完成！成功下载 ${downloadedSongs.length} 首歌曲，已打包为ZIP文件`, 'success');
+            } catch (error) {
+                console.error('下载歌单失败:', error);
+                showNotification('下载歌单过程中出现错误: ' + error.message, 'error');
+                progressContainer.remove();
+                overlay.remove();
+            } finally {
+                // 恢复下载按钮
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+            }
+        }
+
+        // 从已保存的歌单下载所有歌曲
+        async function downloadAllSongsFromSaved(playlistKey) {
+            const playlist = playlistStorage.get(playlistKey);
+            if (!playlist) {
+                showNotification('歌单不存在', 'error');
+                return;
+            }
+
+            // 设置当前解析的歌单数据以便复用下载函数
+            currentParsedPlaylistData = {
+                name: playlist.name,
+                songs: playlist.songs,
+                id: playlist.id
+            };
+
+            // 调用下载函数
+            await downloadAllSongs();
         }
 
         document.getElementById('qualitySelect').addEventListener('change', () => {
@@ -2862,6 +3092,9 @@
                         </div>
                     </div>
                     <div class="playlist-item-actions">
+                        <button class="playlist-action-btn" onclick="downloadAllSongsFromSaved('${key}')" title="下载整个歌单">
+                            <i class="fas fa-download"></i>
+                        </button>
                         <button class="playlist-action-btn" onclick="refreshPlaylist('${key}')" title="刷新歌单">
                             <i class="fas fa-sync-alt"></i>
                         </button>
