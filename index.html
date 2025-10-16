@@ -796,9 +796,9 @@
         }
 
         /* 下载区域 */
-        .download-container {
+        .quality-download-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
             margin-bottom: 20px;
         }
@@ -808,7 +808,7 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 12px 15px;
+            padding: 10px 15px;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 10px;
@@ -1155,7 +1155,7 @@
                 margin-bottom: 15px;
             }
             
-            .download-container {
+            .quality-download-container {
                 margin-bottom: 15px;
             }
             
@@ -1423,28 +1423,22 @@
                     </div>
                 </div>
 
-                <!-- 音质选择 -->
-                <div class="quality-container">
-                    <div class="quality-label">
-                        <i class="fas fa-music"></i>
-                        <span>音质</span>
-                    </div>
-                    <select class="quality-select" id="qualitySelect">
-                        <option value="128">标准 128K</option>
-                        <option value="192">较高 192K</option>
-                        <option value="320" selected>高品质 320K</option>
-                        <option value="740">无损 FLAC</option>
-                        <option value="999">Hi-Res</option>
-                    </select>
-                </div>
-
+                <!-- 音量滑块 -->
                 <div class="volume-container">
                     <i class="fas fa-volume-up volume-icon"></i>
                     <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="80" onchange="setVolume(this.value)">
                 </div>
 
-                <!-- 下载区域 -->
-                <div class="download-container">
+                <div class="quality-download-container">
+                    <!-- 音质选择 -->
+                    <select class="quality-select" id="qualitySelect">
+                        <option value="128">标准 128K</option>
+                        <option value="192">较高 192K</option>
+                        <option value="320">高品质 320K</option>
+                        <option value="740"selected>无损 FLAC</option>
+                        <option value="999">Hi-Res</option>
+                    </select>
+                    <!-- 下载区域 -->
                     <button class="download-btn" onclick="downloadCurrentSong()" id="downloadSongBtn" disabled>
                         <i class="fas fa-download"></i>
                         <span>下载音乐</span>
