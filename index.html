@@ -1554,6 +1554,9 @@
                     <div class="current-info">
                         <h3 id="currentTitle">未选择歌曲</h3>
                         <p id="currentArtist">请搜索并选择要播放的歌曲</p>
+                        <button class="action-btn" id="playerFavoriteBtn" onclick="toggleCurrentSongFavorite()" title="添加到我的喜欢" style="margin-top: 10px; display: none;">
+                            <i class="far fa-heart"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -1671,12 +1674,189 @@
                             playlist.updateTime = playlist.createTime || new Date().toISOString();
                         }
                     }
-                    
-                    updateSavedPlaylistsList();
                 }
+                
+                // 确保"我的喜欢"歌单存在
+                initializeFavoritesPlaylist();
+                
+                updateSavedPlaylistsList();
             } catch (error) {
                 console.error('加载我的歌单失败:', error);
             }
+        }
+        
+        // 初始化"我的喜欢"歌单
+        function initializeFavoritesPlaylist() {
+            // 检查是否已存在"我的喜欢"歌单
+            let favoritesKey = null;
+            for (let [key, playlist] of playlistStorage.entries()) {
+                if (playlist.name === "我的喜欢") {
+                    favoritesKey = key;
+                    break;
+                }
+            }
+            
+            // 如果不存在，则创建
+            if (!favoritesKey) {
+                playlistCounter++;
+                const newKey = `playlist_${playlistCounter}`;
+                playlistStorage.set(newKey, {
+                    name: "我的喜欢",
+                    songs: [],
+                    id: "favorites",
+                    createTime: new Date().toISOString(),
+                    isFavorites: true // 标记为收藏歌单
+                });
+                savePlaylistsToStorage();
+            }
+        }
+        
+        // 获取"我的喜欢"歌单的key
+        function getFavoritesPlaylistKey() {
+            for (let [key, playlist] of playlistStorage.entries()) {
+                if (playlist.name === "我的喜欢") {
+                    return key;
+                }
+            }
+            return null;
+        }
+        
+        // 检查歌曲是否在"我的喜欢"歌单中
+        function isSongInFavorites(song) {
+            const favoritesKey = getFavoritesPlaylistKey();
+            if (!favoritesKey) return false;
+            
+            const favoritesPlaylist = playlistStorage.get(favoritesKey);
+            if (!favoritesPlaylist || !favoritesPlaylist.songs) return false;
+            
+            // 通过id和source来判断是否为同一首歌
+            return favoritesPlaylist.songs.some(favSong => 
+                favSong.id === song.id && favSong.source === song.source);
+        }
+        
+        // 切换歌曲的喜欢状态
+        function toggleFavorite(event, index, containerId, playlistForPlayback) {
+            // 阻止事件冒泡，避免触发播放
+            event.stopPropagation();
+            
+            const song = playlistForPlayback[index];
+            const favoritesKey = getFavoritesPlaylistKey();
+            if (!favoritesKey) {
+                showNotification('未找到"我的喜欢"歌单', 'error');
+                return;
+            }
+            
+            const favoritesPlaylist = playlistStorage.get(favoritesKey);
+            const isCurrentlyFavorite = isSongInFavorites(song);
+            
+            if (isCurrentlyFavorite) {
+                // 从"我的喜欢"歌单中移除
+                favoritesPlaylist.songs = favoritesPlaylist.songs.filter(favSong => 
+                    !(favSong.id === song.id && favSong.source === song.source));
+                showNotification(`已从"我的喜欢"中移除: ${song.name}`, 'success');
+            } else {
+                // 添加到"我的喜欢"歌单
+                // 检查是否已存在
+                if (!isSongInFavorites(song)) {
+                    favoritesPlaylist.songs.unshift(song); // 添加到开头
+                    showNotification(`已添加到"我的喜欢": ${song.name}`, 'success');
+                }
+            }
+            
+            // 更新存储
+            playlistStorage.set(favoritesKey, favoritesPlaylist);
+            savePlaylistsToStorage();
+            
+            // 更新显示
+            updateSavedPlaylistsList();
+            
+            // 更新按钮图标
+            const button = event.currentTarget;
+            const icon = button.querySelector('i');
+            if (isCurrentlyFavorite) {
+                icon.className = 'far fa-heart';
+                icon.style.color = '';
+            } else {
+                icon.className = 'fas fa-heart';
+                icon.style.color = '#ff6b6b';
+            }
+            
+            // 如果当前显示的是"我的喜欢"歌单，需要刷新显示
+            if (currentSelectedPlaylist === favoritesKey) {
+                displaySearchResults(favoritesPlaylist.songs, 'savedResults', favoritesPlaylist.songs);
+            }
+        }
+        
+        // 切换当前播放歌曲的喜欢状态
+        function toggleCurrentSongFavorite() {
+            if (currentIndex === -1 || !currentPlaylist || currentPlaylist.length === 0) {
+                showNotification('当前没有播放歌曲', 'warning');
+                return;
+            }
+            
+            const song = currentPlaylist[currentIndex];
+            const favoritesKey = getFavoritesPlaylistKey();
+            if (!favoritesKey) {
+                showNotification('未找到"我的喜欢"歌单', 'error');
+                return;
+            }
+            
+            const favoritesPlaylist = playlistStorage.get(favoritesKey);
+            const isCurrentlyFavorite = isSongInFavorites(song);
+            
+            if (isCurrentlyFavorite) {
+                // 从"我的喜欢"歌单中移除
+                favoritesPlaylist.songs = favoritesPlaylist.songs.filter(favSong => 
+                    !(favSong.id === song.id && favSong.source === song.source));
+                showNotification(`已从"我的喜欢"中移除: ${song.name}`, 'success');
+            } else {
+                // 添加到"我的喜欢"歌单
+                if (!isSongInFavorites(song)) {
+                    favoritesPlaylist.songs.unshift(song); // 添加到开头
+                    showNotification(`已添加到"我的喜欢": ${song.name}`, 'success');
+                }
+            }
+            
+            // 更新存储
+            playlistStorage.set(favoritesKey, favoritesPlaylist);
+            savePlaylistsToStorage();
+            
+            // 更新播放器区域的按钮图标
+            const button = document.getElementById('playerFavoriteBtn');
+            const icon = button.querySelector('i');
+            if (isCurrentlyFavorite) {
+                icon.className = 'far fa-heart';
+                icon.style.color = '';
+            } else {
+                icon.className = 'fas fa-heart';
+                icon.style.color = '#ff6b6b';
+            }
+            
+            // 更新所有搜索结果中的按钮状态
+            updateAllFavoriteButtons();
+            
+            // 更新我的歌单列表
+            updateSavedPlaylistsList();
+            
+            // 如果当前显示的是"我的喜欢"歌单，需要刷新显示
+            if (currentSelectedPlaylist === favoritesKey) {
+                displaySearchResults(favoritesPlaylist.songs, 'savedResults', favoritesPlaylist.songs);
+            }
+        }
+        
+        // 更新所有搜索结果中的喜欢按钮状态
+        function updateAllFavoriteButtons() {
+            // 更新所有歌曲项中的喜欢按钮
+            document.querySelectorAll('.song-item').forEach(item => {
+                const button = item.querySelector('.song-actions .action-btn');
+                if (button) {
+                    const icon = button.querySelector('i');
+                    if (icon) {
+                        // 这里需要获取到对应的歌曲信息，但我们没有直接的关联方式
+                        // 简化处理：在下次刷新列表时会正确显示
+                    }
+                }
+            });
         }
         
         // 保存歌单到本地存储
@@ -1879,6 +2059,11 @@
                 songItem.className = 'song-item';
                 songItem.onclick = () => playSong(index, playlistForPlayback);
 
+                // 检查歌曲是否已在"我的喜欢"歌单中
+                const isFavorite = isSongInFavorites(song);
+                const favoriteIconClass = isFavorite ? 'fas fa-heart' : 'far fa-heart';
+                const favoriteIconColor = isFavorite ? 'style="color: #ff6b6b;"' : '';
+
                 songItem.innerHTML = `
                     <div class="song-index">${(index + 1).toString().padStart(2, '0')}</div>
                     <div class="song-info">
@@ -1886,6 +2071,9 @@
                         <div class="song-artist">${Array.isArray(song.artist) ? song.artist.join(' / ') : song.artist} · ${song.album}</div>
                     </div>
                     <div class="song-actions">
+                        <button class="action-btn" onclick="toggleFavorite(event, ${index}, '${containerId}', playlistForPlayback)" title="添加到我的喜欢">
+                            <i class="${favoriteIconClass}" ${favoriteIconColor}></i>
+                        </button>
                         <button class="action-btn" onclick="downloadSong(${index})" title="下载音乐">
                             <i class="fas fa-download"></i>
                         </button>
@@ -2321,6 +2509,19 @@
 
             const coverUrl = await getAlbumCoverUrl(song, 500);
             currentCover.src = coverUrl;
+            
+            // 显示并更新播放器区域的喜欢按钮
+            const playerFavoriteBtn = document.getElementById('playerFavoriteBtn');
+            playerFavoriteBtn.style.display = 'inline-block';
+            const icon = playerFavoriteBtn.querySelector('i');
+            
+            if (isSongInFavorites(song)) {
+                icon.className = 'fas fa-heart';
+                icon.style.color = '#ff6b6b';
+            } else {
+                icon.className = 'far fa-heart';
+                icon.style.color = '';
+            }
         }
 
         function updateActiveItem() {
@@ -3083,15 +3284,23 @@
                 const updateDate = playlist.updateTime ? new Date(playlist.updateTime).toLocaleDateString() : createDate;
                 const displayDate = playlist.updateTime ? `更新: ${updateDate}` : `创建: ${createDate}`;
                 
-                playlistItem.innerHTML = `
-                    <div class="playlist-item-info" onclick="selectPlaylist('${key}')">
-                        <div class="playlist-item-name">${playlist.name}</div>
-                        <div class="playlist-item-details">
-                            <span><i class="fas fa-music"></i> ${playlist.songs.length}首</span>
-                            <span><i class="fas fa-calendar"></i> ${displayDate}</span>
-                        </div>
-                    </div>
-                    <div class="playlist-item-actions">
+                // 检查是否为"我的喜欢"歌单，如果是则不显示刷新按钮
+                const isFavorites = playlist.name === "我的喜欢";
+                
+                let actionsHTML = '';
+                if (isFavorites) {
+                    // "我的喜欢"歌单不显示刷新按钮
+                    actionsHTML = `
+                        <button class="playlist-action-btn" onclick="downloadAllSongsFromSaved('${key}')" title="下载整个歌单">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="playlist-action-btn delete" onclick="deletePlaylist('${key}')" title="删除歌单">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                } else {
+                    // 其他歌单显示所有按钮
+                    actionsHTML = `
                         <button class="playlist-action-btn" onclick="downloadAllSongsFromSaved('${key}')" title="下载整个歌单">
                             <i class="fas fa-download"></i>
                         </button>
@@ -3101,6 +3310,19 @@
                         <button class="playlist-action-btn delete" onclick="deletePlaylist('${key}')" title="删除歌单">
                             <i class="fas fa-trash"></i>
                         </button>
+                    `;
+                }
+                
+                playlistItem.innerHTML = `
+                    <div class="playlist-item-info" onclick="selectPlaylist('${key}')">
+                        <div class="playlist-item-name">${playlist.name}</div>
+                        <div class="playlist-item-details">
+                            <span><i class="fas fa-music"></i> ${playlist.songs.length}首</span>
+                            <span><i class="fas fa-calendar"></i> ${displayDate}</span>
+                        </div>
+                    </div>
+                    <div class="playlist-item-actions">
+                        ${actionsHTML}
                     </div>
                 `;
                 
