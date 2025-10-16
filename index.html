@@ -1268,24 +1268,6 @@
             background: rgba(255, 255, 255, 0.5);
         }
 
-        /* 音频可视化波浪样式 */
-        .audio-visualizer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 100px;
-            z-index: 10;
-            pointer-events: none;
-            background: linear-gradient(to top, rgba(12, 12, 12, 0.8), transparent);
-            backdrop-filter: blur(5px);
-        }
-
-        #waveCanvas {
-            width: 100%;
-            height: 100%;
-            opacity: 0.6;
-        }
   </style>
 </head>
 <body>
@@ -1475,11 +1457,6 @@
         </div>
     </div>
 
-    <!-- 音频可视化波浪 -->
-    <div class="audio-visualizer">
-        <canvas id="waveCanvas"></canvas>
-    </div>
-
     <script>
         // API基础URL
         const API_BASE = 'https://music-api.gdstudio.xyz/api.php';
@@ -1539,10 +1516,6 @@
         const totalTimeSpan = document.getElementById('totalTime');
         const lyricsContainer = document.getElementById('lyricsContainer');
         const currentCover = document.getElementById('currentCover');
-        
-        const canvas = document.getElementById('waveCanvas');
-        const canvasCtx = canvas.getContext('2d');
-        let animationId;
 
         // 添加探索雷达功能（从 Music.html 集成）
         async function exploreRadar() {
@@ -1777,13 +1750,7 @@
                             isPlaying = true;
                             updatePlayButton();
                             currentCover.classList.add('playing');
-                            
-                            try {
-                                startVisualization();
-                            } catch (e) {
-                                console.error('启动音频可视化失败:', e);
-                            }
-                            
+
                             showNotification(`开始播放 (${getQualityText(urlData.br || quality)})`, 'success');
                     }).catch(error => {
                         console.error('播放失败:', error);
@@ -2213,16 +2180,10 @@
             isPlaying = true;
             updatePlayButton();
             currentCover.classList.add('playing');
-            
+
             // 移动端在播放开始时自动切换到播放页面
             if (window.innerWidth <= 768) {
                 switchMobilePage(1);
-            }
-            
-            try {
-            startVisualization();
-            } catch (e) {
-                console.error('启动音频可视化失败:', e);
             }
         });
 
@@ -2230,12 +2191,6 @@
             isPlaying = false;
             updatePlayButton();
             currentCover.classList.remove('playing');
-            
-            try {
-            stopVisualization();
-            } catch (e) {
-                console.error('停止音频可视化失败:', e);
-            }
         });
 
         document.addEventListener('keydown', (e) => {
@@ -2264,105 +2219,6 @@
                 isUserScrolling = false;
             }, 2000);
         });
-
-        function initAudioVisualizer() {
-            resizeCanvas();
-            window.addEventListener('resize', resizeCanvas);
-        }
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = 100;
-        }
-
-        function connectAudioSource() {
-            return;
-        }
-        
-        function drawWave() {
-            try {
-                animationId = requestAnimationFrame(drawWave);
-                
-                canvasCtx.fillStyle = 'rgba(12, 12, 12, 0.2)';
-                canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                const gradient = canvasCtx.createLinearGradient(0, 0, canvas.width, 0);
-                gradient.addColorStop(0, '#ff6b6b');
-                gradient.addColorStop(0.5, '#ff8a80');
-                gradient.addColorStop(1, '#ff6b6b');
-                
-                canvasCtx.lineWidth = 3;
-                canvasCtx.strokeStyle = gradient;
-                canvasCtx.beginPath();
-                
-                const time = Date.now() * 0.002;
-                const amplitude = isPlaying ? 30 + Math.random() * 20 : 5;
-                const frequency = 0.02;
-                const points = 100;
-                
-                for (let i = 0; i <= points; i++) {
-                    const x = (i / points) * canvas.width;
-                    const noise = isPlaying ? Math.random() * 10 : 0;
-                    const y = canvas.height / 2 + Math.sin(i * frequency + time) * amplitude + noise;
-                    
-                    if (i === 0) {
-                        canvasCtx.moveTo(x, y);
-                    } else {
-                        canvasCtx.lineTo(x, y);
-                    }
-                }
-                
-                canvasCtx.stroke();
-                
-                canvasCtx.beginPath();
-                canvasCtx.strokeStyle = 'rgba(255, 107, 107, 0.3)';
-                
-                for (let i = 0; i <= points; i++) {
-                    const x = (i / points) * canvas.width;
-                    const noise = isPlaying ? Math.random() * 10 : 0;
-                    const y = canvas.height / 2 - Math.sin(i * frequency + time) * amplitude - noise;
-                    
-                    if (i === 0) {
-                        canvasCtx.moveTo(x, y);
-                    } else {
-                        canvasCtx.lineTo(x, y);
-                    }
-                }
-                
-                canvasCtx.stroke();
-            } catch (e) {
-                console.error('绘制波浪失败:', e);
-                if (animationId) {
-                    cancelAnimationFrame(animationId);
-                    animationId = null;
-                }
-            }
-        }
-
-        function startVisualization() {
-            try {
-                if (!animationId) {
-                    drawWave();
-            }
-            } catch (e) {
-                console.error('启动可视化失败:', e);
-            }
-        }
-
-        function stopVisualization() {
-            try {
-            if (animationId) {
-                cancelAnimationFrame(animationId);
-                animationId = null;
-                }
-                
-                if (canvasCtx) {
-                    canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-                }
-            } catch (e) {
-                console.error('停止可视化失败:', e);
-            }
-        }
 
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(content => {
@@ -2745,8 +2601,7 @@
         }
 
         setVolume(80);
-        initAudioVisualizer();
-        
+
         // 初始化时加载已保存的歌单
         loadSavedPlaylists();
         
