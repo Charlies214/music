@@ -228,19 +228,19 @@
             background: linear-gradient(135deg, #ff6b6b, #ff5252);
             border: none;
             color: #fff;
-            padding: 25px 40px;
-            border-radius: 20px;
+            padding: 16px 30px;
+            border-radius: 15px;
             cursor: pointer;
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
+            gap: 10px;
             transition: all 0.3s ease;
-            min-height: 80px;
-            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
+            min-height: 56px;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
         }
 
         .explore-radar-btn:hover {
@@ -286,7 +286,7 @@
             background: #ff5252;
         }
 
-        /* 已保存歌单列表样式 */
+        /* 我的歌单列表样式 */
         .saved-playlists-container {
             margin-bottom: 20px;
             background: rgba(255, 255, 255, 0.03);
@@ -300,8 +300,16 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
-            padding-bottom: 10px;
+            padding: 8px 10px 10px 10px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .saved-playlists-header:hover {
+            background: rgba(255, 255, 255, 0.05);
         }
 
         .saved-playlists-header h4 {
@@ -313,6 +321,14 @@
             gap: 8px;
         }
 
+        .saved-playlists-header #toggleIcon {
+            transition: transform 0.3s ease;
+        }
+
+        .saved-playlists-header.collapsed #toggleIcon {
+            transform: rotate(180deg);
+        }
+
         .clear-all-btn {
             background: rgba(244, 67, 54, 0.2);
             border: 1px solid rgba(244, 67, 54, 0.3);
@@ -322,6 +338,8 @@
             cursor: pointer;
             transition: all 0.3s ease;
             font-size: 12px;
+            position: relative;
+            z-index: 10;
         }
 
         .clear-all-btn:hover {
@@ -886,6 +904,77 @@
             transform: scale(1.1);
         }
 
+        /* 解析网易云歌单信息头部 */
+        .parsed-playlist-header {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .parsed-playlist-info h3 {
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .parsed-playlist-info p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .parsed-playlist-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn-large {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .action-btn-large.save-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .action-btn-large.save-btn:hover {
+            background: linear-gradient(135deg, #45a049, #3d8b40);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+        }
+
+        .action-btn-large.clear-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .action-btn-large.clear-btn:hover {
+            background: rgba(244, 67, 54, 0.3);
+            color: #fff;
+            border-color: rgba(244, 67, 54, 0.5);
+        }
+
         /* 歌词区域 */
         .lyrics-section {
             background: rgba(255, 255, 255, 0.05);
@@ -1300,7 +1389,7 @@
                 <i class="fas fa-music"></i>
                 <span>云音乐</span>
             </div>
-            
+
             <div class="search-container">
                 <div class="search-wrapper">
                     <input type="text" class="search-input" placeholder="搜索音乐、歌手、专辑..." id="searchInput">
@@ -1332,21 +1421,25 @@
         <!-- 搜索结果区域 -->
         <div class="content-section">
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('search')">
+                <button class="tab-btn" onclick="switchTab('search')">
                     <i class="fas fa-search"></i> 搜索结果
                 </button>
-                <button class="tab-btn" onclick="switchTab('playlist')">
-                    <i class="fas fa-list-music"></i> 网易云歌单
+                <button class="tab-btn active" onclick="switchTab('saved')">
+                    <i class="fas fa-bookmark"></i> 我的歌单
+                </button>
+                <button class="tab-btn" onclick="switchTab('parse')">
+                    <i class="fas fa-cloud-download-alt"></i> 解析网易云歌单
                 </button>
             </div>
 
-            <div id="searchTab" class="tab-content active">
+            <!-- 搜索结果标签页 -->
+            <div id="searchTab" class="tab-content">
                 <!-- 添加探索雷达按钮 -->
                 <button class="explore-radar-btn" onclick="exploreRadar()" id="exploreRadarBtn">
                     <i class="fas fa-satellite-dish"></i>
                     <span>探索雷达 - 发现热门音乐</span>
                 </button>
-                
+
                 <div class="search-results" id="searchResults">
                     <div class="empty-state">
                         <i class="fas fa-search"></i>
@@ -1355,34 +1448,72 @@
                 </div>
             </div>
 
-            <div id="playlistTab" class="tab-content">
+            <!-- 解析网易云歌单标签页 -->
+            <div id="parseTab" class="tab-content">
                 <div class="playlist-input-container">
                     <input type="text" id="playlistIdInput" class="playlist-input" placeholder="输入网易云歌单ID或链接...">
                     <button class="playlist-btn" onclick="parsePlaylist()">
-                        <i class="fas fa-check"></i> 解析歌单
+                        <i class="fas fa-download"></i> 解析网易云歌单
                     </button>
                 </div>
-                
-                <!-- 已解析的歌单列表 -->
-                <div class="saved-playlists-container">
-                    <div class="saved-playlists-header">
-                        <h4><i class="fas fa-bookmark"></i> 已保存的歌单</h4>
-                        <button class="clear-all-btn" onclick="clearAllPlaylists()" title="清空所有歌单">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                    <div class="saved-playlists-list" id="savedPlaylistsList">
-                        <div class="empty-saved-state">
-                            <i class="fas fa-music"></i>
-                            <div>暂无保存的歌单</div>
+
+                <!-- 当前解析的歌单信息 -->
+                <div id="currentParsedPlaylist" style="display: none;">
+                    <div class="parsed-playlist-header">
+                        <div class="parsed-playlist-info">
+                            <h3 id="parsedPlaylistName">歌单名称</h3>
+                            <p id="parsedPlaylistStats"><i class="fas fa-music"></i> 0首歌曲</p>
+                        </div>
+                        <div class="parsed-playlist-actions">
+                            <button class="action-btn-large save-btn" onclick="saveCurrentPlaylist()" title="保存到我的歌单">
+                                <i class="fas fa-bookmark"></i> 保存歌单
+                            </button>
+                            <button class="action-btn-large clear-btn" onclick="clearParsedPlaylist()" title="清除当前解析">
+                                <i class="fas fa-times-circle"></i> 清除
+                            </button>
                         </div>
                     </div>
                 </div>
-                
-                <div class="search-results" id="playlistResults">
+
+                <div class="search-results" id="parseResults">
                     <div class="empty-state">
-                        <i class="fas fa-list-ol"></i>
-                        <div>输入歌单ID后点击解析，或点击上方已保存的歌单</div>
+                        <i class="fas fa-cloud-download-alt"></i>
+                        <div>输入网易云歌单ID或链接后点击解析按钮</div>
+                        <div style="margin-top: 10px; font-size: 12px; color: rgba(255, 255, 255, 0.5);">
+                            支持格式: 歌单ID 或完整链接
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 我的歌单标签页 -->
+            <div id="savedTab" class="tab-content active">
+                <div class="saved-playlists-container" style="margin-bottom: 15px;">
+                    <div class="saved-playlists-header" onclick="handleHeaderClick(event)">
+                        <h4 style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0;">
+                            <i class="fas fa-bookmark"></i>
+                            我保存的歌单
+                            <i class="fas fa-chevron-up" id="toggleIcon" style="font-size: 12px; color: rgba(255, 255, 255, 0.6);"></i>
+                        </h4>
+                        <button class="clear-all-btn" onclick="event.stopPropagation(); clearAllPlaylists();" title="清空所有歌单">
+                            <i class="fas fa-trash"></i> 清空
+                        </button>
+                    </div>
+                    <div class="saved-playlists-list" id="savedPlaylistsList" style="display: block;">
+                        <div class="empty-saved-state">
+                            <i class="fas fa-music"></i>
+                            <div>暂无保存的歌单</div>
+                            <div style="margin-top: 8px; font-size: 12px; opacity: 0.7;">
+                                在"解析网易云歌单"页面解析后保存
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="search-results" id="savedResults">
+                    <div class="empty-state">
+                        <i class="fas fa-hand-pointer"></i>
+                        <div>点击上方已保存的歌单查看歌曲列表</div>
                     </div>
                 </div>
             </div>
@@ -1507,7 +1638,7 @@
                     updateSavedPlaylistsList();
                 }
             } catch (error) {
-                console.error('加载已保存歌单失败:', error);
+                console.error('加载我的歌单失败:', error);
             }
         }
         
@@ -1934,11 +2065,14 @@
                 item.classList.remove('active');
             });
 
-            const activeListItems = document.querySelectorAll(
-                (currentPlaylist === playlistData ? '#playlistResults' : '#searchResults') + ' .song-item'
-            );
-            if (activeListItems[currentIndex]) {
-                activeListItems[currentIndex].classList.add('active');
+            // 尝试从所有可能的容器中查找歌曲项
+            const containers = ['#searchResults', '#parseResults', '#savedResults'];
+            for (const containerId of containers) {
+                const activeListItems = document.querySelectorAll(`${containerId} .song-item`);
+                if (activeListItems[currentIndex]) {
+                    activeListItems[currentIndex].classList.add('active');
+                    break;
+                }
             }
         }
 
@@ -2258,6 +2392,9 @@
             }
         }
 
+        // 存储当前解析的歌单临时数据
+        let currentParsedPlaylistData = null;
+
         async function parsePlaylist() {
             const input = document.getElementById('playlistIdInput').value.trim();
             if (!input) {
@@ -2265,9 +2402,9 @@
                 return;
             }
 
-            // 修复：正确提取歌单ID
+            // 修复:正确提取歌单ID
             let playlistId = input;
-            
+
             // 处理各种网易云歌单链接格式
             if (input.includes('music.163.com')) {
                 // 匹配 id= 参数
@@ -2282,28 +2419,12 @@
                     }
                 }
             }
-            
+
             // 确保只包含数字
             playlistId = playlistId.replace(/[^0-9]/g, '');
-            
+
             if (!playlistId) {
                 showNotification('无法从输入中提取有效的歌单ID', 'error');
-                return;
-            }
-            
-            // 检查是否已经解析过这个歌单
-            let existingPlaylistKey = null;
-            for (let [key, playlist] of playlistStorage.entries()) {
-                if (playlist.id === playlistId) {
-                    existingPlaylistKey = key;
-                    break;
-                }
-            }
-            
-            // 如果歌单已存在，执行刷新逻辑
-            if (existingPlaylistKey) {
-                showNotification('检测到相同歌单，正在刷新...', 'info');
-                refreshPlaylistById(existingPlaylistKey, playlistId);
                 return;
             }
 
@@ -2312,11 +2433,11 @@
                 switchMobilePage(0);
             }
 
-            const resultsContainer = document.getElementById('playlistResults');
+            const resultsContainer = document.getElementById('parseResults');
             resultsContainer.innerHTML = `
                 <div class="loading">
                     <i class="fas fa-spinner"></i>
-                    <div>正在解析歌单 ID: ${playlistId}...</div>
+                    <div>正在解析网易云歌单 ID: ${playlistId}...</div>
                 </div>
             `;
 
@@ -2326,7 +2447,7 @@
 
                 let songs = [];
                 let playlistName = '未知歌单';
-                
+
                 if (data && data.playlist && data.playlist.tracks) {
                     songs = data.playlist.tracks.map(track => ({
                         name: track.name,
@@ -2352,38 +2473,35 @@
                 }
 
                 if (songs.length > 0) {
-                    // 保存歌单到本地存储
-                    playlistCounter++;
-                    const playlistKey = `playlist_${playlistCounter}`;
-                    
-                    playlistStorage.set(playlistKey, {
+                    // 保存到临时变量,不自动保存
+                    currentParsedPlaylistData = {
                         name: playlistName,
                         songs: songs,
-                        id: playlistId,
-                        createTime: new Date().toISOString()
-                    });
-                    
-                    savePlaylistsToStorage();
-                    updateSavedPlaylistsList();
-                    
+                        id: playlistId
+                    };
+
+                    // 显示歌单信息头部
+                    document.getElementById('currentParsedPlaylist').style.display = 'block';
+                    document.getElementById('parsedPlaylistName').textContent = playlistName;
+                    document.getElementById('parsedPlaylistStats').innerHTML = `<i class="fas fa-music"></i> ${songs.length}首歌曲`;
+
                     // 显示歌曲列表
-                    displaySearchResults(songs, 'playlistResults', songs);
-                    currentSelectedPlaylist = playlistKey;
-                    
-                    showNotification(`成功解析并保存 ${songs.length} 首歌曲`, 'success');
-                    
+                    displaySearchResults(songs, 'parseResults', songs);
+
+                    showNotification(`成功解析网易云歌单，共 ${songs.length} 首歌曲`, 'success');
+
                     // 清空输入框以便解析下一个歌单
                     document.getElementById('playlistIdInput').value = '';
                 } else {
                     resultsContainer.innerHTML = `
                         <div class="error">
                             <i class="fas fa-exclamation-triangle"></i>
-                            <div>解析歌单失败，请检查ID是否正确或API是否正常</div>
+                            <div>解析网易云歌单失败，请检查ID是否正确或API是否正常</div>
                         </div>
                     `;
                 }
             } catch (error) {
-                console.error('解析歌单失败:', error);
+                console.error('解析网易云歌单失败:', error);
                 // 修复：添加更详细的错误处理，区分网络错误和文件访问限制
                 if (window.location.protocol === 'file:') {
                     resultsContainer.innerHTML = `
@@ -2402,8 +2520,62 @@
                 }
             }
         }
+
+        // 保存当前解析的歌单
+        function saveCurrentPlaylist() {
+            if (!currentParsedPlaylistData) {
+                showNotification('没有可保存的歌单', 'warning');
+                return;
+            }
+
+            // 检查是否已经保存过
+            let existingPlaylistKey = null;
+            for (let [key, playlist] of playlistStorage.entries()) {
+                if (playlist.id === currentParsedPlaylistData.id) {
+                    existingPlaylistKey = key;
+                    break;
+                }
+            }
+
+            if (existingPlaylistKey) {
+                showNotification('该歌单已存在', 'info');
+                return;
+            }
+
+            // 保存到本地存储
+            playlistCounter++;
+            const playlistKey = `playlist_${playlistCounter}`;
+
+            playlistStorage.set(playlistKey, {
+                name: currentParsedPlaylistData.name,
+                songs: currentParsedPlaylistData.songs,
+                id: currentParsedPlaylistData.id,
+                createTime: new Date().toISOString()
+            });
+
+            savePlaylistsToStorage();
+            updateSavedPlaylistsList();
+
+            showNotification(`歌单"${currentParsedPlaylistData.name}"已保存`, 'success');
+        }
+
+        // 清除当前解析的歌单
+        function clearParsedPlaylist() {
+            currentParsedPlaylistData = null;
+            document.getElementById('currentParsedPlaylist').style.display = 'none';
+            document.getElementById('parseResults').innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-cloud-download-alt"></i>
+                    <div>输入网易云歌单ID或链接后点击解析按钮</div>
+                    <div style="margin-top: 10px; font-size: 12px; color: rgba(255, 255, 255, 0.5);">
+                        支持格式: 歌单ID 或完整链接
+                    </div>
+                </div>
+            `;
+            showNotification('已清除解析内容', 'info');
+        }
         
-        // 更新已保存歌单列表显示
+        // 更新我的歌单列表显示
         function updateSavedPlaylistsList() {
             const container = document.getElementById('savedPlaylistsList');
             if (playlistStorage.size === 0) {
@@ -2455,11 +2627,11 @@
         function selectPlaylist(playlistKey) {
             const playlist = playlistStorage.get(playlistKey);
             if (!playlist) return;
-            
+
             currentSelectedPlaylist = playlistKey;
-            displaySearchResults(playlist.songs, 'playlistResults', playlist.songs);
+            displaySearchResults(playlist.songs, 'savedResults', playlist.songs);
             updateSavedPlaylistsList();
-            
+
             showNotification(`已加载歌单: ${playlist.name}`, 'info');
         }
         
@@ -2467,23 +2639,23 @@
         function deletePlaylist(playlistKey) {
             const playlist = playlistStorage.get(playlistKey);
             if (!playlist) return;
-            
+
             if (confirm(`确定要删除歌单 "${playlist.name}" 吗？`)) {
                 playlistStorage.delete(playlistKey);
                 savePlaylistsToStorage();
                 updateSavedPlaylistsList();
-                
+
                 // 如果删除的是当前选中的歌单，清空显示
                 if (currentSelectedPlaylist === playlistKey) {
                     currentSelectedPlaylist = null;
-                    document.getElementById('playlistResults').innerHTML = `
+                    document.getElementById('savedResults').innerHTML = `
                         <div class="empty-state">
-                            <i class="fas fa-list-ol"></i>
-                            <div>输入歌单ID后点击解析，或点击上方已保存的歌单</div>
+                            <i class="fas fa-hand-pointer"></i>
+                            <div>点击上方已保存的歌单查看歌曲列表</div>
                         </div>
                     `;
                 }
-                
+
                 showNotification(`已删除歌单: ${playlist.name}`, 'success');
             }
         }
@@ -2500,22 +2672,22 @@
         async function refreshPlaylistById(playlistKey, playlistId) {
             const playlist = playlistStorage.get(playlistKey);
             if (!playlist) return;
-            
-            const resultsContainer = document.getElementById('playlistResults');
+
+            const resultsContainer = document.getElementById('savedResults');
             resultsContainer.innerHTML = `
                 <div class="loading">
                     <i class="fas fa-spinner"></i>
                     <div>正在刷新歌单: ${playlist.name}...</div>
                 </div>
             `;
-            
+
             try {
                 const response = await fetch(`${API_BASE}?types=playlist&id=${playlistId}&source=netease`);
                 const data = await response.json();
-                
+
                 let songs = [];
                 let playlistName = playlist.name;
-                
+
                 if (data && data.playlist && data.playlist.tracks) {
                     songs = data.playlist.tracks.map(track => ({
                         name: track.name,
@@ -2539,7 +2711,7 @@
                     }));
                     playlistName = data.name || playlistName;
                 }
-                
+
                 if (songs.length > 0) {
                     // 更新歌单数据
                     playlistStorage.set(playlistKey, {
@@ -2549,15 +2721,15 @@
                         createTime: playlist.createTime, // 保留创建时间
                         updateTime: new Date().toISOString() // 添加更新时间
                     });
-                    
+
                     savePlaylistsToStorage();
                     updateSavedPlaylistsList();
-                    
+
                     // 如果是当前选中的歌单，更新显示
                     if (currentSelectedPlaylist === playlistKey) {
-                        displaySearchResults(songs, 'playlistResults', songs);
+                        displaySearchResults(songs, 'savedResults', songs);
                     }
-                    
+
                     showNotification(`歌单刷新成功，共 ${songs.length} 首歌曲`, 'success');
                 } else {
                     resultsContainer.innerHTML = `
@@ -2596,21 +2768,21 @@
                 showNotification('没有可清空的歌单', 'info');
                 return;
             }
-            
+
             if (confirm(`确定要清空所有 ${playlistStorage.size} 个已保存的歌单吗？`)) {
                 playlistStorage.clear();
                 playlistCounter = 0;
                 currentSelectedPlaylist = null;
                 savePlaylistsToStorage();
                 updateSavedPlaylistsList();
-                
-                document.getElementById('playlistResults').innerHTML = `
+
+                document.getElementById('savedResults').innerHTML = `
                     <div class="empty-state">
-                        <i class="fas fa-list-ol"></i>
-                        <div>输入歌单ID后点击解析，或点击上方已保存的歌单</div>
+                        <i class="fas fa-hand-pointer"></i>
+                        <div>点击上方已保存的歌单查看歌曲列表</div>
                     </div>
                 `;
-                
+
                 showNotification('已清空所有歌单', 'success');
             }
         }
@@ -2662,11 +2834,38 @@
             currentMobilePage = pageIndex;
         }
         
+        // 处理标题点击事件
+        function handleHeaderClick(event) {
+            // 阻止点击清空按钮时触发折叠
+            if (event.target.closest('.clear-all-btn')) {
+                return;
+            }
+
+            togglePlaylistList();
+        }
+
+        // 折叠/展开歌单列表
+        function togglePlaylistList() {
+            const playlistList = document.getElementById('savedPlaylistsList');
+            const header = document.querySelector('.saved-playlists-header');
+            const toggleIcon = document.getElementById('toggleIcon');
+
+            if (playlistList.style.display === 'none') {
+                playlistList.style.display = 'block';
+                toggleIcon.className = 'fas fa-chevron-up';
+                header.classList.remove('collapsed');
+            } else {
+                playlistList.style.display = 'none';
+                toggleIcon.className = 'fas fa-chevron-down';
+                header.classList.add('collapsed');
+            }
+        }
+
         let startY = 0;
         let currentY = 0;
         let isHorizontalSwipe = false;
         let swipeDirection = null;
-        
+
         function handleTouchStart(e) {
             if (window.innerWidth > 768) return;
             
