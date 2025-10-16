@@ -1534,6 +1534,10 @@
                 </div>
 
                 <div class="player-controls">
+                    <!-- 添加隐藏占位按钮以保持视觉平衡和居中对称 -->
+                    <button class="control-btn small placeholder-btn" aria-hidden="true" tabindex="-1" style="visibility: hidden; pointer-events: none;">
+                        <i class="fas fa-circle"></i>
+                    </button>
                     <button class="control-btn small" onclick="previousSong()">
                         <i class="fas fa-step-backward"></i>
                     </button>
@@ -1620,6 +1624,8 @@
 
         // 播放模式: 'order' (顺序播放), 'loop' (列表循环), 'random' (随机播放), 'single' (单曲循环)
         let playMode = 'loop'; // 默认为列表循环
+        let playHistory = []; // 存储播放历史的索引数组，用于随机模式回退
+        let historyPosition = -1; // 当前在历史记录中的位置
 
         // 存储所有歌单的数据结构
         let playlistStorage = new Map();
@@ -1870,12 +1876,29 @@
             }
         }
 
-        async function playSong(index, playlist) {
+        async function playSong(index, playlist, fromHistory = false) {
             if (!playlist || index < 0 || index >= playlist.length) return;
             
             currentPlaylist = playlist;
             currentIndex = index;
             const song = currentPlaylist[index];
+
+            // 记录播放历史，用于随机模式下的上一曲功能
+            if (!fromHistory) {
+                // 如果当前不在历史的末尾，移除之后的所有历史
+                if (historyPosition < playHistory.length - 1) {
+                    playHistory = playHistory.slice(0, historyPosition + 1);
+                }
+                // 添加当前播放的索引到历史记录
+                playHistory.push(index);
+                historyPosition = playHistory.length - 1;
+                
+                // 限制历史记录长度为50条，避免内存占用过大
+                if (playHistory.length > 50) {
+                    playHistory.shift();
+                    historyPosition--;
+                }
+            }
 
             await updateCurrentSongInfo(song);
             updateActiveItem();
@@ -2253,10 +2276,49 @@
         }
 
         function previousSong() {
-            if (currentIndex > 0) {
-                playSong(currentIndex - 1, currentPlaylist);
-            } else {
-                showNotification('已经是第一首歌曲', 'info');
+            switch (playMode) {
+                case 'single':
+                    // 单曲循环：重新播放当前歌曲
+                    if (currentIndex >= 0) {
+                        playSong(currentIndex, currentPlaylist);
+                    } else {
+                        showNotification('请先选择要播放的歌曲', 'warning');
+                    }
+                    break;
+
+                case 'random':
+                    // 修复随机播放模式下的上一曲逻辑，使用播放历史记录
+                    // 随机播放：从播放历史中返回上一首
+                    if (historyPosition > 0) {
+                        // 回退到历史记录中的上一首
+                        historyPosition--;
+                        const previousIndex = playHistory[historyPosition];
+                        currentIndex = previousIndex;
+                        playSong(previousIndex, currentPlaylist, true); // fromHistory = true
+                    } else {
+                        showNotification('没有上一曲了', 'info');
+                    }
+                    break;
+
+                case 'order':
+                    // 顺序播放：播放上一首，到第一首停止
+                    if (currentIndex > 0) {
+                        playSong(currentIndex - 1, currentPlaylist);
+                    } else {
+                        showNotification('已经是第一首歌曲', 'info');
+                    }
+                    break;
+
+                case 'loop':
+                    // 列表循环：播放上一首，如果是第一首则跳到最后一首
+                    if (currentIndex > 0) {
+                        playSong(currentIndex - 1, currentPlaylist);
+                    } else {
+                        // 跳到最后一首
+                        playSong(currentPlaylist.length - 1, currentPlaylist);
+                        showNotification('列表循环，跳到最后一首', 'info');
+                    }
+                    break;
             }
         }
 
@@ -2272,8 +2334,16 @@
                     break;
 
                 case 'random':
-                    // 随机播放：随机选择一首歌
-                    if (currentPlaylist.length > 1) {
+                    // 优化随机播放模式的下一曲逻辑，支持历史前进
+                    // 随机播放：如果在历史中回退过，则前进到历史中的下一首；否则随机选择一首新歌
+                    if (historyPosition < playHistory.length - 1) {
+                        // 如果当前位置不在历史末尾，前进到历史中的下一首
+                        historyPosition++;
+                        const nextIndex = playHistory[historyPosition];
+                        currentIndex = nextIndex;
+                        playSong(nextIndex, currentPlaylist, true); // fromHistory = true
+                    } else if (currentPlaylist.length > 1) {
+                        // 随机选择一首新歌
                         let randomIndex;
                         do {
                             randomIndex = Math.floor(Math.random() * currentPlaylist.length);
