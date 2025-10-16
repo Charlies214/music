@@ -1543,6 +1543,9 @@
                     <button class="control-btn small" onclick="nextSong()">
                         <i class="fas fa-step-forward"></i>
                     </button>
+                    <button class="control-btn small" id="playModeBtn" onclick="togglePlayMode()" title="列表循环">
+                        <i class="fas fa-repeat"></i>
+                    </button>
                 </div>
 
                 <div class="progress-container">
@@ -1614,7 +1617,10 @@
         let isUserScrolling = false;
         let userScrollTimeout;
         let playlistData = [];
-        
+
+        // 播放模式: 'order' (顺序播放), 'loop' (列表循环), 'random' (随机播放), 'single' (单曲循环)
+        let playMode = 'loop'; // 默认为列表循环
+
         // 存储所有歌单的数据结构
         let playlistStorage = new Map();
         let playlistCounter = 0;
@@ -2255,10 +2261,83 @@
         }
 
         function nextSong() {
-            if (currentIndex < currentPlaylist.length - 1) {
-                playSong(currentIndex + 1, currentPlaylist);
-            } else {
-                showNotification('已经是最后一首歌曲', 'info');
+            switch (playMode) {
+                case 'single':
+                    // 单曲循环：重新播放当前歌曲
+                    if (currentIndex >= 0) {
+                        playSong(currentIndex, currentPlaylist);
+                    } else {
+                        showNotification('请先选择要播放的歌曲', 'warning');
+                    }
+                    break;
+
+                case 'random':
+                    // 随机播放：随机选择一首歌
+                    if (currentPlaylist.length > 1) {
+                        let randomIndex;
+                        do {
+                            randomIndex = Math.floor(Math.random() * currentPlaylist.length);
+                        } while (randomIndex === currentIndex); // 避免重复播放当前歌曲
+                        playSong(randomIndex, currentPlaylist);
+                    } else if (currentPlaylist.length === 1) {
+                        playSong(0, currentPlaylist);
+                    } else {
+                        showNotification('歌单为空', 'warning');
+                    }
+                    break;
+
+                case 'order':
+                    // 顺序播放：播放到最后一首停止
+                    if (currentIndex < currentPlaylist.length - 1) {
+                        playSong(currentIndex + 1, currentPlaylist);
+                    } else {
+                        showNotification('已经是最后一首歌曲', 'info');
+                    }
+                    break;
+
+                case 'loop':
+                    // 列表循环：播放到最后一首后回到第一首
+                    if (currentIndex < currentPlaylist.length - 1) {
+                        playSong(currentIndex + 1, currentPlaylist);
+                    } else {
+                        // 回到第一首
+                        playSong(0, currentPlaylist);
+                        showNotification('列表循环，重新开始', 'info');
+                    }
+                    break;
+            }
+        }
+
+        // 切换播放模式 (循环切换: 列表循环 → 顺序播放 → 随机播放 → 单曲循环)
+        function togglePlayMode() {
+            const playModeBtn = document.getElementById('playModeBtn');
+            const icon = playModeBtn.querySelector('i');
+
+            switch (playMode) {
+                case 'loop':
+                    playMode = 'order';
+                    icon.className = 'fas fa-bars';
+                    playModeBtn.title = '顺序播放';
+                    showNotification('顺序播放：播放到最后一首停止', 'info');
+                    break;
+                case 'order':
+                    playMode = 'random';
+                    icon.className = 'fas fa-random';
+                    playModeBtn.title = '随机播放';
+                    showNotification('随机播放：随机选择歌曲播放', 'info');
+                    break;
+                case 'random':
+                    playMode = 'single';
+                    icon.className = 'fas fa-redo';
+                    playModeBtn.title = '单曲循环';
+                    showNotification('单曲循环：重复播放当前歌曲', 'info');
+                    break;
+                case 'single':
+                    playMode = 'loop';
+                    icon.className = 'fas fa-repeat';
+                    playModeBtn.title = '列表循环';
+                    showNotification('列表循环：播放完列表后重新开始', 'info');
+                    break;
             }
         }
 
