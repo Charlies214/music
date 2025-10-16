@@ -722,6 +722,7 @@
             width: 0%;
             transition: width 0.1s ease;
             position: relative;
+            pointer-events: none; /* 防止填充条拦截点击事件 */
         }
 
         .progress-fill::after {
@@ -2264,12 +2265,19 @@
         function seekTo(event) {
             // 阻止事件冒泡，防止触发页面切换
             event.stopPropagation();
-            
+
             if (audioPlayer.duration && isFinite(audioPlayer.duration)) {
-                const rect = event.target.getBoundingClientRect();
+                // 使用 currentTarget 而不是 target，确保获取的是绑定事件的元素（progress-bar），而不是被点击的子元素
+                const progressBar = event.currentTarget;
+                const rect = progressBar.getBoundingClientRect();
+
                 // 支持触摸事件
                 const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+
+                // 计算点击位置相对于进度条的百分比
                 const percent = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width));
+
+                // 设置播放位置
                 audioPlayer.currentTime = percent * audioPlayer.duration;
             }
         }
