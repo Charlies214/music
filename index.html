@@ -1554,16 +1554,13 @@
                     <div class="current-info">
                         <h3 id="currentTitle">未选择歌曲</h3>
                         <p id="currentArtist">请搜索并选择要播放的歌曲</p>
-                        <button class="action-btn" id="playerFavoriteBtn" onclick="toggleCurrentSongFavorite()" title="添加到我的喜欢" style="margin-top: 10px; display: none;">
-                            <i class="far fa-heart"></i>
-                        </button>
                     </div>
                 </div>
 
                 <div class="player-controls">
-                    <!-- 添加隐藏占位按钮以保持视觉平衡和居中对称 -->
-                    <button class="control-btn small placeholder-btn" aria-hidden="true" tabindex="-1" style="visibility: hidden; pointer-events: none;">
-                        <i class="fas fa-circle"></i>
+                    <!-- 我的喜欢按钮 - 与其他播放控制按钮保持统一样式 -->
+                    <button class="control-btn small" id="playerFavoriteBtn" onclick="toggleCurrentSongFavorite()" title="添加到我的喜欢">
+                        <i class="far fa-heart"></i>
                     </button>
                     <button class="control-btn small" onclick="previousSong()">
                         <i class="fas fa-step-backward"></i>
@@ -1734,12 +1731,8 @@
                 favSong.id === song.id && favSong.source === song.source);
         }
         
-        // 切换歌曲的喜欢状态
-        function toggleFavorite(event, index, containerId, playlistForPlayback) {
-            // 阻止事件冒泡，避免触发播放
-            event.stopPropagation();
-            
-            const song = playlistForPlayback[index];
+        // 切换歌曲的喜欢状态（新版本，通过歌曲对象和按钮元素直接操作）
+        function toggleFavoriteButton(song, buttonElement, playlist, index, containerId) {
             const favoritesKey = getFavoritesPlaylistKey();
             if (!favoritesKey) {
                 showNotification('未找到"我的喜欢"歌单', 'error');
@@ -1756,7 +1749,6 @@
                 showNotification(`已从"我的喜欢"中移除: ${song.name}`, 'success');
             } else {
                 // 添加到"我的喜欢"歌单
-                // 检查是否已存在
                 if (!isSongInFavorites(song)) {
                     favoritesPlaylist.songs.unshift(song); // 添加到开头
                     showNotification(`已添加到"我的喜欢": ${song.name}`, 'success');
@@ -1770,21 +1762,47 @@
             // 更新显示
             updateSavedPlaylistsList();
             
-            // 更新按钮图标
-            const button = event.currentTarget;
-            const icon = button.querySelector('i');
-            if (isCurrentlyFavorite) {
-                icon.className = 'far fa-heart';
-                icon.style.color = '';
-            } else {
-                icon.className = 'fas fa-heart';
-                icon.style.color = '#ff6b6b';
+            // 更新所有界面中该歌曲的喜欢按钮状态
+            updateAllFavoriteButtonsForSong(song);
+            
+            // 如果当前正在播放该歌曲，更新播放器区域的按钮
+            if (currentPlaylist && currentIndex >= 0 && currentPlaylist[currentIndex]) {
+                const currentSong = currentPlaylist[currentIndex];
+                if (currentSong.id === song.id && currentSong.source === song.source) {
+                    updatePlayerFavoriteButton();
+                }
             }
             
             // 如果当前显示的是"我的喜欢"歌单，需要刷新显示
             if (currentSelectedPlaylist === favoritesKey) {
                 displaySearchResults(favoritesPlaylist.songs, 'savedResults', favoritesPlaylist.songs);
             }
+        }
+        
+        // 更新所有界面中指定歌曲的喜欢按钮状态
+        function updateAllFavoriteButtonsForSong(song) {
+            const isFavorite = isSongInFavorites(song);
+            document.querySelectorAll('.song-item').forEach(item => {
+                const songName = item.querySelector('.song-name')?.textContent;
+                const songArtist = item.querySelector('.song-artist')?.textContent;
+                
+                // 简单匹配，实际项目中可能需要更精确的匹配方式
+                if (songName === song.name) {
+                    const favoriteBtn = item.querySelector('.favorite-btn');
+                    if (favoriteBtn) {
+                        const icon = favoriteBtn.querySelector('i');
+                        if (icon) {
+                            if (isFavorite) {
+                                icon.className = 'fas fa-heart';
+                                icon.style.color = '#ff6b6b';
+                            } else {
+                                icon.className = 'far fa-heart';
+                                icon.style.color = '';
+                            }
+                        }
+                    }
+                }
+            });
         }
         
         // 切换当前播放歌曲的喜欢状态
@@ -1821,19 +1839,11 @@
             playlistStorage.set(favoritesKey, favoritesPlaylist);
             savePlaylistsToStorage();
             
-            // 更新播放器区域的按钮图标
-            const button = document.getElementById('playerFavoriteBtn');
-            const icon = button.querySelector('i');
-            if (isCurrentlyFavorite) {
-                icon.className = 'far fa-heart';
-                icon.style.color = '';
-            } else {
-                icon.className = 'fas fa-heart';
-                icon.style.color = '#ff6b6b';
-            }
+            // 更新播放器区域的按钮
+            updatePlayerFavoriteButton();
             
-            // 更新所有搜索结果中的按钮状态
-            updateAllFavoriteButtons();
+            // 更新所有界面中该歌曲的喜欢按钮状态
+            updateAllFavoriteButtonsForSong(song);
             
             // 更新我的歌单列表
             updateSavedPlaylistsList();
@@ -1844,19 +1854,23 @@
             }
         }
         
-        // 更新所有搜索结果中的喜欢按钮状态
-        function updateAllFavoriteButtons() {
-            // 更新所有歌曲项中的喜欢按钮
-            document.querySelectorAll('.song-item').forEach(item => {
-                const button = item.querySelector('.song-actions .action-btn');
-                if (button) {
-                    const icon = button.querySelector('i');
-                    if (icon) {
-                        // 这里需要获取到对应的歌曲信息，但我们没有直接的关联方式
-                        // 简化处理：在下次刷新列表时会正确显示
-                    }
-                }
-            });
+        // 更新播放器区域的喜欢按钮状态
+        function updatePlayerFavoriteButton() {
+            if (currentIndex === -1 || !currentPlaylist || currentPlaylist.length === 0) {
+                return;
+            }
+            
+            const song = currentPlaylist[currentIndex];
+            const button = document.getElementById('playerFavoriteBtn');
+            const icon = button.querySelector('i');
+            
+            if (isSongInFavorites(song)) {
+                icon.className = 'fas fa-heart';
+                icon.style.color = '#ff6b6b';
+            } else {
+                icon.className = 'far fa-heart';
+                icon.style.color = '';
+            }
         }
         
         // 保存歌单到本地存储
@@ -2071,18 +2085,41 @@
                         <div class="song-artist">${Array.isArray(song.artist) ? song.artist.join(' / ') : song.artist} · ${song.album}</div>
                     </div>
                     <div class="song-actions">
-                        <button class="action-btn" onclick="toggleFavorite(event, ${index}, '${containerId}', playlistForPlayback)" title="添加到我的喜欢">
+                        <button class="action-btn favorite-btn" data-index="${index}" data-container="${containerId}" title="添加到我的喜欢">
                             <i class="${favoriteIconClass}" ${favoriteIconColor}></i>
                         </button>
-                        <button class="action-btn" onclick="downloadSong(${index})" title="下载音乐">
+                        <button class="action-btn download-btn" data-index="${index}" title="下载音乐">
                             <i class="fas fa-download"></i>
                         </button>
-                        <button class="action-btn" onclick="downloadLyric(${index})" title="下载歌词">
+                        <button class="action-btn lyric-btn" data-index="${index}" title="下载歌词">
                             <i class="fas fa-file-text"></i>
                         </button>
                     </div>
                     <div class="song-duration">--:--</div>
                 `;
+
+                // 使用事件委托方式添加按钮事件监听器
+                const favoriteBtn = songItem.querySelector('.favorite-btn');
+                const downloadBtn = songItem.querySelector('.download-btn');
+                const lyricBtn = songItem.querySelector('.lyric-btn');
+
+                // 我的喜欢按钮
+                favoriteBtn.onclick = (event) => {
+                    event.stopPropagation(); // 阻止冒泡，避免触发播放
+                    toggleFavoriteButton(song, favoriteBtn, playlistForPlayback, index, containerId);
+                };
+
+                // 下载音乐按钮
+                downloadBtn.onclick = (event) => {
+                    event.stopPropagation(); // 阻止冒泡，避免触发播放
+                    downloadSongByData(song, playlistForPlayback, index);
+                };
+
+                // 下载歌词按钮
+                lyricBtn.onclick = (event) => {
+                    event.stopPropagation(); // 阻止冒泡，避免触发播放
+                    downloadLyricByData(song, playlistForPlayback, index);
+                };
 
                 resultsContainer.appendChild(songItem);
             }
@@ -2274,6 +2311,86 @@
             } catch (error) {
                 console.error('下载歌词失败:', error);
                 // 修复：添加更详细的错误处理，区分网络错误和文件访问限制
+                if (window.location.protocol === 'file:') {
+                    showNotification('由于浏览器安全限制，无法通过文件方式访问API。请使用本地服务器方式打开页面（如 http://localhost:8000 ）', 'error');
+                } else {
+                    showNotification('下载歌词失败，请稍后重试', 'error');
+                }
+            }
+        }
+
+        // 根据歌曲对象下载音乐（不依赖currentPlaylist）
+        async function downloadSongByData(song, playlist, index) {
+            const quality = document.getElementById('qualitySelect').value;
+            
+            try {
+                showNotification('正在获取下载链接...', 'info');
+                
+                const response = await fetch(`${API_BASE}?types=url&source=${song.source}&id=${song.id}&br=${quality}`);
+                const data = await response.json();
+                
+                if (data && data.url) {
+                    const link = document.createElement('a');
+                    link.href = data.url;
+                    link.download = `${song.name} - ${Array.isArray(song.artist) ? song.artist.join(', ') : song.artist}.mp3`;
+                    link.target = '_blank';
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showNotification('开始下载音乐文件', 'success');
+                } else {
+                    showNotification('无法获取下载链接', 'error');
+                }
+            } catch (error) {
+                console.error('下载失败:', error);
+                if (window.location.protocol === 'file:') {
+                    showNotification('由于浏览器安全限制，无法通过文件方式访问API。请使用本地服务器方式打开页面（如 http://localhost:8000 ）', 'error');
+                } else {
+                    showNotification('下载失败，请稍后重试', 'error');
+                }
+            }
+        }
+
+        // 根据歌曲对象下载歌词（不依赖currentPlaylist）
+        async function downloadLyricByData(song, playlist, index) {
+            try {
+                showNotification('正在获取歌词...', 'info');
+                
+                const response = await fetch(`${API_BASE}?types=lyric&source=${song.source}&id=${song.lyric_id || song.id}`);
+                const data = await response.json();
+                
+                if (data && data.lyric) {
+                    let lyricContent = `歌曲：${song.name}\n`;
+                    lyricContent += `歌手：${Array.isArray(song.artist) ? song.artist.join(', ') : song.artist}\n`;
+                    lyricContent += `专辑：${song.album}\n`;
+                    lyricContent += `来源：${song.source}\n\n`;
+                    lyricContent += data.lyric;
+                    
+                    if (data.tlyric) {
+                        lyricContent += '\n\n=== 翻译歌词 ===\n\n';
+                        lyricContent += data.tlyric;
+                    }
+                    
+                    const blob = new Blob([lyricContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `${song.name} - ${Array.isArray(song.artist) ? song.artist.join(', ') : song.artist}.lrc`;
+                    
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    URL.revokeObjectURL(url);
+                    showNotification('歌词下载完成', 'success');
+                } else {
+                    showNotification('该歌曲暂无歌词', 'warning');
+                }
+            } catch (error) {
+                console.error('下载歌词失败:', error);
                 if (window.location.protocol === 'file:') {
                     showNotification('由于浏览器安全限制，无法通过文件方式访问API。请使用本地服务器方式打开页面（如 http://localhost:8000 ）', 'error');
                 } else {
@@ -2510,18 +2627,8 @@
             const coverUrl = await getAlbumCoverUrl(song, 500);
             currentCover.src = coverUrl;
             
-            // 显示并更新播放器区域的喜欢按钮
-            const playerFavoriteBtn = document.getElementById('playerFavoriteBtn');
-            playerFavoriteBtn.style.display = 'inline-block';
-            const icon = playerFavoriteBtn.querySelector('i');
-            
-            if (isSongInFavorites(song)) {
-                icon.className = 'fas fa-heart';
-                icon.style.color = '#ff6b6b';
-            } else {
-                icon.className = 'far fa-heart';
-                icon.style.color = '';
-            }
+            // 更新播放器区域的喜欢按钮状态
+            updatePlayerFavoriteButton();
         }
 
         function updateActiveItem() {
